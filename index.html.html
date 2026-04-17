@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<!--
+  ╔══════════════════════════════════════════════════════════════════╗
+  ║           CONTABILIDAD - FORODECAMPISTAS                        ║
+  ║           Versión 1.0 | Archivo único HTML                      ║
+  ╠══════════════════════════════════════════════════════════════════╣
+  ║  INSTRUCCIONES DE USO:                                          ║
+  ║                                                                  ║
+  ║  1. SUBIR AL SERVIDOR:                                          ║
+  ║     - Guarda este archivo como "contabilidad.html"              ║
+  ║     - Sube el archivo via FTP o panel de hosting                ║
+  ║     - Colócalo en la carpeta deseada, p.ej: /contabilidad/      ║
+  ║                                                                  ║
+  ║  2. ACCEDER DESDE URL:                                          ║
+  ║     https://www.forodecampistas.com/contabilidad/               ║
+  ║     (o donde hayas subido el archivo)                           ║
+  ║                                                                  ║
+  ║  3. PRIMERA VEZ:                                                ║
+  ║     - La app arranca vacía y lista para usar                    ║
+  ║     - Los datos se guardan automáticamente en el navegador      ║
+  ║     - Usa "Copia de Seguridad" regularmente                     ║
+  ║                                                                  ║
+  ║  4. LIMITACIONES (sin base de datos):                           ║
+  ║     - Los datos viven en ese navegador/dispositivo              ║
+  ║     - Si limpias caché, se pierden (usa copia de seguridad)     ║
+  ║     - No es multiusuario ni sincroniza entre dispositivos       ║
+  ║     - Máx ~5MB de datos (suficiente para miles de registros)    ║
+  ╚══════════════════════════════════════════════════════════════════╝
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contabilidad · FdC</title>
+<style>
+/* ═══════════════════════════════════════════
+   VARIABLES Y RESET
+═══════════════════════════════════════════ */
+:root {
+  --bg:          #0f1117;
+  --bg2:         #161b27;
+  --bg3:         #1e2535;
+  --surface:     #242d40;
+  --surface2:    #2d3850;
+  --border:      #2f3b52;
+  --accent:      #3b82f6;
+  --accent2:     #60a5fa;
+  --green:       #10b981;
+  --green-soft:  #064e3b;
+  --red:         #ef4444;
+  --red-soft:    #450a0a;
+  --yellow:      #f59e0b;
+  --yellow-soft: #451a03;
+  --purple:      #8b5cf6;
+  --orange:      #f97316;
+  --teal:        #14b8a6;
+  --pink:        #ec4899;
+  --txt:         #e2e8f0;
+  --txt2:        #94a3b8;
+  --txt3:        #64748b;
+  --radius:      10px;
+  --radius-lg:   16px;
+  --shadow:      0 4px 24px rgba(0,0,0,.4);
+  --shadow-lg:   0 8px 40px rgba(0,0,0,.6);
+  --font:        'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono:   'Consolas', 'SF Mono', monospace;
+  --transition:  .18s cubic-bezier(.4,0,.2,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--txt);
+  min-height: 100vh;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--txt3); }
+
+/* ═══════════════════════════════════════════
+   LAYOUT PRINCIPAL
+═══════════════════════════════════════════ */
+#app { display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+#sidebar {
+  width: 220px;
+  min-height: 100vh;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  transition: transform var(--transition);
+}
+#sidebar-logo {
+  padding: 20px 16px 14px;
+  border-bottom: 1px solid var(--border);
+}
+#sidebar-logo h1 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent2);
+  letter-spacing: .3px;
+  line-height: 1.3;
+}
+#sidebar-logo p { font-size: 11px; color: var(--txt3); margin-top: 2px; }
+
+#nav {
+  flex: 1;
+  padding: 12px 0;
+  overflow-y: auto;
+}
+.nav-section { padding: 8px 12px 4px; font-size: 10px; color: var(--txt3); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 16px;
+  cursor: pointer;
+  color: var(--txt2);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all var(--transition);
+  border-left: 3px solid transparent;
+  margin: 1px 0;
+}
+.nav-item:hover { color: var(--txt); background: var(--bg3); }
+.nav-item.active { color: var(--accent2); background: rgba(59,130,246,.12); border-left-color: var(--accent); }
+.nav-item .icon { width: 18px; text-align: center; font-size: 15px; flex-shrink: 0; }
+
+#sidebar-bottom {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.btn-sidebar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--txt2);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+  width: 100%;
+}
+.btn-sidebar:hover { background: var(--bg3); color: var(--txt); border-color: var(--accent); }
+.btn-sidebar.danger:hover { border-color: var(--red); color: var(--red); }
+
+/* MAIN CONTENT */
+#main {
+  flex: 1;
+  margin-left: 220px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+#topbar {
+  position: sticky; top: 0; z-index: 90;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+#topbar h2 { font-size: 17px; font-weight: 700; color: var(--txt); }
+#topbar-actions { display: flex; gap: 8px; }
+
+#content { padding: 24px; flex: 1; }
+
+/* Hamburger móvil */
+#hamburger {
+  display: none;
+  background: none; border: none; color: var(--txt); font-size: 20px; cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════
+   COMPONENTES BASE
+═══════════════════════════════════════════ */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  border: none; cursor: pointer;
+  font-size: 13px; font-weight: 500;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #2563eb; box-shadow: 0 0 0 3px rgba(59,130,246,.3); }
+.btn-secondary { background: var(--surface); color: var(--txt2); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--surface2); color: var(--txt); }
+.btn-success { background: var(--green); color: #fff; }
+.btn-success:hover { background: #059669; }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-danger:hover { background: #dc2626; }
+.btn-warning { background: var(--yellow); color: #000; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-icon { padding: 7px; }
+
+/* Cards */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+.card-sm { padding: 14px 16px; }
+.card-title {
+  font-size: 12px; font-weight: 600;
+  color: var(--txt3); text-transform: uppercase;
+  letter-spacing: .8px; margin-bottom: 8px;
+}
+.card-value {
+  font-size: 26px; font-weight: 700;
+  color: var(--txt); line-height: 1.2;
+}
+.card-sub { font-size: 12px; color: var(--txt3); margin-top: 4px; }
+
+/* Grid */
+.grid { display: grid; gap: 16px; }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* Badge */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 600;
+}
+.badge-green { background: var(--green-soft); color: var(--green); }
+.badge-red { background: var(--red-soft); color: var(--red); }
+.badge-blue { background: rgba(59,130,246,.15); color: var(--accent2); }
+.badge-yellow { background: var(--yellow-soft); color: var(--yellow); }
+.badge-gray { background: var(--surface); color: var(--txt3); }
+
+/* Tabs */
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.tab {
+  padding: 9px 16px; cursor: pointer;
+  font-size: 13px; font-weight: 500;
+  color: var(--txt3);
+  border-bottom: 2px solid transparent;
+  transition: all var(--transition);
+}
+.tab:hover { color: var(--txt2); }
+.tab.active { color: var(--accent2); border-bottom-color: var(--accent); }
+
+/* Formulario */
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 12px; font-weight: 600; color: var(--txt2); margin-bottom: 6px; }
+.form-label span.req { color: var(--red); }
+.form-control {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--txt);
+  font-size: 13px;
+  padding: 9px 12px;
+  transition: border-color var(--transition);
+  font-family: var(--font);
+}
+.form-control:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+.form-control.error { border-color: var(--red); }
+select.form-control { cursor: pointer; }
+textarea.form-control { resize: vertical; min-height: 70px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.form-error { font-size: 11px; color: var(--red); margin-top: 4px; }
+.form-hint { font-size: 11px; color: var(--txt3); margin-top: 4px; }
+
+/* Tabla */
+.table-wrap { overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead tr { background: var(--surface); }
+thead th {
+  padding: 11px 14px; text-align: left;
+  font-size: 11px; font-weight: 600;
+  color: var(--txt3); text-transform: uppercase;
+  letter-spacing: .6px; white-space: nowrap;
+}
+tbody tr { border-top: 1px solid var(--border); transition: background var(--transition); }
+tbody tr:hover { background: var(--bg3); }
+tbody td { padding: 11px 14px; color: var(--txt2); vertical-align: middle; }
+tbody td.highlight { color: var(--txt); font-weight: 600; }
+.amount-green { color: var(--green) !important; font-weight: 600; }
+.amount-red { color: var(--red) !important; font-weight: 600; }
+
+/* Colores de actividad */
+.act-viajes     { color: #60a5fa; }
+.act-foro       { color: #a78bfa; }
+.act-alquiler   { color: #34d399; }
+.act-publicidad { color: #fbbf24; }
+.act-caravaningcard { color: #f87171; }
+.act-varios     { color: #94a3b8; }
+
+.dot-viajes     { background: #60a5fa; }
+.dot-foro       { background: #a78bfa; }
+.dot-alquiler   { background: #34d399; }
+.dot-publicidad { background: #fbbf24; }
+.dot-caravaningcard { background: #f87171; }
+.dot-varios     { background: #94a3b8; }
+
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; flex-shrink: 0; }
+
+/* Alerts / Toasts */
+#toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  padding: 12px 16px; border-radius: var(--radius);
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--txt); font-size: 13px; max-width: 320px;
+  box-shadow: var(--shadow);
+  animation: slideIn .2s ease;
+  display: flex; align-items: center; gap: 10px;
+}
+.toast.success { border-color: var(--green); }
+.toast.error { border-color: var(--red); }
+.toast.warning { border-color: var(--yellow); }
+@keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.7);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  animation: fadeIn .15s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  width: 100%; max-width: 560px;
+  max-height: 90vh; overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  animation: slideUp .2s ease;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+.modal-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-header h3 { font-size: 15px; font-weight: 700; }
+.modal-close { background: none; border: none; color: var(--txt3); font-size: 18px; cursor: pointer; transition: color var(--transition); }
+.modal-close:hover { color: var(--txt); }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+/* Progress bar */
+.progress { height: 6px; background: var(--surface); border-radius: 999px; overflow: hidden; }
+.progress-bar { height: 100%; border-radius: 999px; transition: width .4s ease; }
+
+/* Checkbox custom */
+.check-row { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.check-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+
+/* Separador */
+.separator { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+/* Stat pill */
+.stat-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--txt3);
+  background: var(--surface);
+  padding: 4px 10px; border-radius: 999px;
+}
+.stat-pill.up { color: var(--green); background: var(--green-soft); }
+.stat-pill.down { color: var(--red); background: var(--red-soft); }
+
+/* Section header */
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.section-title { font-size: 15px; font-weight: 700; color: var(--txt); }
+.section-sub { font-size: 12px; color: var(--txt3); margin-top: 2px; }
+
+/* Filters bar */
+.filters-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
+.filters-bar .form-control { min-width: 140px; }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 60px 20px; color: var(--txt3); }
+.empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+.empty-state h3 { font-size: 15px; color: var(--txt2); margin-bottom: 8px; }
+
+/* Gauge / Donut simple */
+canvas { max-width: 100%; }
+
+/* Reparto opciones */
+.reparto-box {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-top: 8px;
+}
+.reparto-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.reparto-item label { flex: 1; font-size: 12px; color: var(--txt2); }
+.reparto-item input[type="number"] { width: 80px; }
+
+/* Resumen global table */
+.resumen-table { border-collapse: collapse; width: 100%; }
+.resumen-table th { background: var(--surface); padding: 10px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--txt3); border: 1px solid var(--border); }
+.resumen-table td { padding: 10px 14px; border: 1px solid var(--border); font-size: 13px; }
+.resumen-table tr:nth-child(even) td { background: var(--bg3); }
+.resumen-table .subtotal { background: var(--surface) !important; font-weight: 700; color: var(--txt); }
+.resumen-table .total { background: rgba(59,130,246,.12) !important; font-weight: 700; color: var(--accent2); }
+
+/* Print */
+@media print {
+  #sidebar, #topbar, #topbar-actions, .no-print, .btn, .filters-bar { display: none !important; }
+  #main { margin-left: 0 !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .card { border: 1px solid #ccc !important; background: #fff !important; }
+  table { font-size: 11px; }
+  thead th, .resumen-table th { background: #eee !important; color: #000 !important; }
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  #sidebar { transform: translateX(-100%); }
+  #sidebar.open { transform: none; }
+  #main { margin-left: 0; }
+  #hamburger { display: block; }
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+  .form-row-3 { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 600px) {
+  #content { padding: 14px; }
+  .grid-2, .grid-4, .grid-3 { grid-template-columns: 1fr; }
+  .form-row, .form-row-3 { grid-template-columns: 1fr; }
+  .card-value { font-size: 20px; }
+  .filters-bar .form-control { min-width: 120px; }
+}
+
+/* Micro chart bars */
+.bar-chart { display: flex; flex-direction: column; gap: 10px; }
+.bar-row { display: flex; align-items: center; gap: 12px; }
+.bar-label { width: 110px; font-size: 12px; color: var(--txt2); flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { flex: 1; height: 8px; background: var(--surface); border-radius: 999px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 999px; transition: width .5s ease; }
+.bar-value { width: 80px; font-size: 12px; color: var(--txt2); text-align: right; flex-shrink: 0; }
+
+/* Tooltip simple */
+[title] { position: relative; }
+
+/* Toggle switch */
+.switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute; cursor: pointer; inset: 0;
+  background: var(--surface2); border-radius: 999px;
+  transition: .3s;
+}
+.slider:before {
+  content: ''; position: absolute;
+  width: 16px; height: 16px; border-radius: 50%;
+  left: 3px; top: 3px;
+  background: var(--txt3); transition: .3s;
+}
+input:checked + .slider { background: var(--accent); }
+input:checked + .slider:before { transform: translateX(18px); background: #fff; }
+
+/* Año selector */
+.year-select-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.year-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--txt2); padding: 6px 12px; border-radius: var(--radius);
+  cursor: pointer; font-size: 13px; transition: all var(--transition);
+}
+.year-btn:hover { background: var(--surface2); color: var(--txt); }
+.year-display { font-size: 16px; font-weight: 700; min-width: 60px; text-align: center; }
+</style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<div id="app">
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div id="sidebar-logo">
+      <h1>📊 Contabilidad</h1>
+      <p>FdC · Gestión financiera</p>
+    </div>
+    <div id="nav">
+      <div class="nav-section">Principal</div>
+      <div class="nav-item active" data-section="dashboard"><span class="icon">🏠</span> Dashboard</div>
+      <div class="nav-item" data-section="registro"><span class="icon">➕</span> Nuevo movimiento</div>
+      <div class="nav-section">Informes</div>
+      <div class="nav-item" data-section="movimientos"><span class="icon">📋</span> Movimientos</div>
+      <div class="nav-item" data-section="actividades"><span class="icon">📁</span> Por actividad</div>
+      <div class="nav-item" data-section="mensual"><span class="icon">📅</span> Resumen mensual</div>
+      <div class="nav-item" data-section="resumen"><span class="icon">📊</span> Resumen global</div>
+    </div>
+    <div id="sidebar-bottom">
+      <button class="btn-sidebar" id="btn-backup">💾 Copia de seguridad</button>
+      <button class="btn-sidebar" id="btn-restore">📂 Restaurar copia</button>
+      <button class="btn-sidebar" id="btn-export-csv">⬇️ Exportar CSV</button>
+      <button class="btn-sidebar danger" id="btn-reset">🗑️ Reiniciar datos</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div id="main">
+    <header id="topbar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button id="hamburger" onclick="toggleSidebar()">☰</button>
+        <div>
+          <h2 id="page-title">Dashboard</h2>
+          <div id="page-sub" style="font-size:11px;color:var(--txt3);"></div>
+        </div>
+      </div>
+      <div id="topbar-actions"></div>
+    </header>
+
+    <div id="content">
+      <!-- Secciones se renderizan aquí -->
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REGISTRO/EDICIÓN -->
+<div id="modal-registro" class="modal-overlay" style="display:none;">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-titulo">Nuevo movimiento</h3>
+      <button class="modal-close" onclick="closeModal('modal-registro')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-movimiento" novalidate>
+        <input type="hidden" id="mov-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Fecha <span class="req">*</span></label>
+            <input type="date" id="mov-fecha" class="form-control">
+            <div class="form-error" id="err-fecha"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tipo <span class="req">*</span></label>
+            <select id="mov-tipo" class="form-control" onchange="onTipoChange()">
+              <option value="">Seleccionar...</option>
+              <option value="ingreso">💚 Ingreso</option>
+              <option value="gasto">❤️ Gasto</option>
+            </select>
+            <div class="form-error" id="err-tipo"></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Actividad <span class="req">*</span></label>
+            <select id="mov-actividad" class="form-control" onchange="onActividadChange()">
+              <option value="">Seleccionar...</option>
+              <option value="Viajes">✈️ Viajes</option>
+              <option value="Foro">💬 Foro</option>
+              <option value="Alquiler">🏠 Alquiler</option>
+              <option value="Publicidad">📢 Publicidad</option>
+              <option value="CaravaningCard">🃏 CaravaningCard</option>
+              <option value="Varios">📦 Varios</option>
+            </select>
+            <div class="form-error" id="err-actividad"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Categoría</label>
+            <input type="text" id="mov-categoria" class="form-control" placeholder="Ej: Publicidad Google...">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Concepto / Descripción <span class="req">*</span></label>
+          <input type="text" id="mov-concepto" class="form-control" placeholder="Descripción del movimiento">
+          <div class="form-error" id="err-concepto"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Importe (€) <span class="req">*</span></label>
+            <input type="number" id="mov-importe" class="form-control" placeholder="0.00" step="0.01" min="0">
+            <div class="form-error" id="err-importe"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Método de pago/cobro</label>
+            <select id="mov-metodo" class="form-control">
+              <option value="">Sin especificar</option>
+              <option value="Transferencia">Transferencia</option>
+              <option value="Tarjeta">Tarjeta</option>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Domiciliación">Domiciliación</option>
+              <option value="Bizum">Bizum</option>
+              <option value="PayPal">PayPal</option>
+              <option value="Stripe">Stripe</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Observaciones</label>
+          <textarea id="mov-observaciones" class="form-control" placeholder="Notas adicionales..."></textarea>
+        </div>
+
+        <!-- Reparto Varios -->
+        <div id="panel-reparto" style="display:none;">
+          <hr class="separator">
+          <label class="check-row" style="margin-bottom:12px;">
+            <input type="checkbox" id="mov-reparto" onchange="onRepartoChange()">
+            <span style="font-size:13px;font-weight:600;">Repartir este gasto entre actividades</span>
+          </label>
+          <div id="reparto-opciones" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">Modo de reparto</label>
+              <select id="mov-reparto-modo" class="form-control" onchange="renderRepartoPersonalizado()">
+                <option value="proporcional">Proporcional (según ingresos)</option>
+                <option value="igual">A partes iguales</option>
+                <option value="personalizado">Personalizado (%)</option>
+              </select>
+            </div>
+            <div id="reparto-personalizado" style="display:none;">
+              <div class="reparto-box" id="reparto-items"></div>
+              <div class="form-hint" id="reparto-total-hint"></div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-registro')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarMovimiento()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMACIÓN -->
+<div id="modal-confirm" class="modal-overlay" style="display:none;">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-header"><h3 id="confirm-title">Confirmar</h3></div>
+    <div class="modal-body"><p id="confirm-msg" style="color:var(--txt2);font-size:14px;"></p></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-confirm')">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-ok">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Input hidden para importar JSON -->
+<input type="file" id="input-json" accept=".json" style="display:none" onchange="importarJSON(this)">
+<input type="file" id="input-restore" accept=".json" style="display:none" onchange="restaurarCopia(this)">
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   DATOS Y CONFIGURACIÓN
+═══════════════════════════════════════════════════════════ */
+const ACTIVIDADES = ['Viajes','Foro','Alquiler','Publicidad','CaravaningCard','Varios'];
+const ACTIVIDADES_MAIN = ['Viajes','Foro','Alquiler','Publicidad','CaravaningCard'];
+const ACT_COLORS = {
+  Viajes:'#60a5fa', Foro:'#a78bfa', Alquiler:'#34d399',
+  Publicidad:'#fbbf24', CaravaningCard:'#f87171', Varios:'#94a3b8'
+};
+const ACT_ICONS = {
+  Viajes:'✈️', Foro:'💬', Alquiler:'🏠',
+  Publicidad:'📢', CaravaningCard:'🃏', Varios:'📦'
+};
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+               'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+/* ─── Estado ─── */
+let state = {
+  movimientos: [],
+  currentSection: 'dashboard',
+  editingId: null,
+  currentYear: new Date().getFullYear(),
+  filterMovimientos: { desde:'', hasta:'', actividad:'', tipo:'', texto:'' },
+};
+
+/* ─── LocalStorage ─── */
+function saveData() {
+  try { localStorage.setItem('fdc_contabilidad', JSON.stringify(state.movimientos)); }
+  catch(e) { toast('Error al guardar datos: ' + e.message, 'error'); }
+}
+function loadData() {
+  try {
+    const d = localStorage.getItem('fdc_contabilidad');
+    if (d) state.movimientos = JSON.parse(d);
+  } catch(e) { state.movimientos = []; }
+}
+
+/* ─── Utilidades ─── */
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function eur(n) { return new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'}).format(n||0); }
+function fmtDate(s) {
+  if (!s) return '';
+  const d = new Date(s + 'T00:00:00');
+  return d.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function today() { return new Date().toISOString().slice(0,10); }
+function toast(msg, type='success') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icons = {success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};
+  t.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+function slugAct(a) { return a.toLowerCase().replace(/\s/g,'').replace(/[^a-z]/g,''); }
+
+/* ─── Cálculos ─── */
+function calcTotales(movs) {
+  const res = {};
+  ACTIVIDADES.forEach(a => { res[a] = { ingresos:0, gastos:0 }; });
+  movs.forEach(m => {
+    const a = m.actividad;
+    if (!res[a]) res[a] = { ingresos:0, gastos:0 };
+    if (m.tipo === 'ingreso') res[a].ingresos += m.importe;
+    else res[a].gastos += m.importe;
+
+    // Reparto de Varios
+    if (a === 'Varios' && m.tipo === 'gasto' && m.reparto && m.repartoDetalle) {
+      const rd = m.repartoDetalle;
+      Object.keys(rd).forEach(act => {
+        if (!res[act]) res[act] = { ingresos:0, gastos:0 };
+        res[act].gastos += (rd[act] / 100) * m.importe;
+      });
+    }
+  });
+  return res;
+}
+
+function calcTotalesMes(movs, año, mes) {
+  const filtrados = movs.filter(m => {
+    const d = new Date(m.fecha + 'T00:00:00');
+    return d.getFullYear() === año && d.getMonth() === mes;
+  });
+  return calcTotales(filtrados);
+}
+
+function totalIngresos(movs) { return movs.filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+m.importe,0); }
+function totalGastos(movs) { return movs.filter(m=>m.tipo==='gasto').reduce((s,m)=>s+m.importe,0); }
+
+function getMovsAño(año) {
+  return state.movimientos.filter(m => {
+    const d = new Date(m.fecha + 'T00:00:00');
+    return d.getFullYear() === año;
+  });
+}
+
+/* ════════════════════════════════════════════
+   NAVEGACIÓN
+════════════════════════════════════════════ */
+function navigate(section) {
+  state.currentSection = section;
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.section === section);
+  });
+  const titles = {
+    dashboard:'Dashboard',registro:'Nuevo movimiento',
+    movimientos:'Movimientos',actividades:'Por actividad',
+    mensual:'Resumen mensual',resumen:'Resumen global'
+  };
+  document.getElementById('page-title').textContent = titles[section] || section;
+  render();
+  if (window.innerWidth < 900) document.getElementById('sidebar').classList.remove('open');
+}
+
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => navigate(el.dataset.section));
+});
+
+/* ════════════════════════════════════════════
+   RENDER PRINCIPAL
+════════════════════════════════════════════ */
+function render() {
+  const el = document.getElementById('content');
+  const actions = document.getElementById('topbar-actions');
+  actions.innerHTML = '';
+  switch(state.currentSection) {
+    case 'dashboard':    renderDashboard(el, actions); break;
+    case 'registro':     renderRegistro(el, actions); break;
+    case 'movimientos':  renderMovimientos(el, actions); break;
+    case 'actividades':  renderActividades(el, actions); break;
+    case 'mensual':      renderMensual(el, actions); break;
+    case 'resumen':      renderResumen(el, actions); break;
+  }
+}
+
+/* ════════════════════════════════════════════
+   SECCIÓN: DASHBOARD
+════════════════════════════════════════════ */
+function renderDashboard(el, actions) {
+  const movs = getMovsAño(state.currentYear);
+  const totales = calcTotales(movs);
+  const totalIng = ACTIVIDADES.reduce((s,a)=>s+totales[a].ingresos,0);
+  const totalGas = ACTIVIDADES.reduce((s,a)=>s+totales[a].gastos,0);
+  const resultado = totalIng - totalGas;
+  const movAll = state.movimientos;
+
+  actions.innerHTML = `
+    <button class="btn btn-primary" onclick="navigate('registro')">➕ Nuevo movimiento</button>
+    <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ Imprimir</button>
+  `;
+
+  // Actividad con más beneficio
+  let mejorAct = '', mejorVal = -Infinity, peorAct = '', peorVal = Infinity;
+  ACTIVIDADES_MAIN.forEach(a => {
+    const r = totales[a].ingresos - totales[a].gastos;
+    if (r > mejorVal) { mejorVal = r; mejorAct = a; }
+    if (r < peorVal) { peorVal = r; peorAct = a; }
+  });
+
+  el.innerHTML = `
+    <div class="year-select-row">
+      <button class="year-btn" onclick="changeYear(-1)">◀</button>
+      <span class="year-display">${state.currentYear}</span>
+      <button class="year-btn" onclick="changeYear(1)">▶</button>
+      <span style="color:var(--txt3);font-size:12px;">Datos del año seleccionado</span>
+    </div>
+
+    <!-- KPIs -->
+    <div class="grid grid-4" style="margin-bottom:20px;">
+      <div class="card card-sm">
+        <div class="card-title">Total ingresos</div>
+        <div class="card-value amount-green">${eur(totalIng)}</div>
+        <div class="card-sub">${movs.filter(m=>m.tipo==='ingreso').length} movimientos</div>
+      </div>
+      <div class="card card-sm">
+        <div class="card-title">Total gastos</div>
+        <div class="card-value amount-red">${eur(totalGas)}</div>
+        <div class="card-sub">${movs.filter(m=>m.tipo==='gasto').length} movimientos</div>
+      </div>
+      <div class="card card-sm">
+        <div class="card-title">Resultado neto</div>
+        <div class="card-value ${resultado>=0?'amount-green':'amount-red'}">${eur(resultado)}</div>
+        <div class="card-sub">${resultado>=0?'✅ Beneficio':'❌ Pérdida'}</div>
+      </div>
+      <div class="card card-sm">
+        <div class="card-title">Nº movimientos</div>
+        <div class="card-value">${movs.length}</div>
+        <div class="card-sub">Total acumulado: ${movAll.length}</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="margin-bottom:20px;">
+      <!-- Por actividad -->
+      <div class="card">
+        <div class="card-title">Resultado por actividad</div>
+        <div class="bar-chart" id="chart-actividades" style="margin-top:12px;"></div>
+      </div>
+      <!-- Mensual -->
+      <div class="card">
+        <div class="card-title">Ingresos vs Gastos mensual</div>
+        <canvas id="canvas-mensual" height="180"></canvas>
+      </div>
+    </div>
+
+    <!-- Indicadores actividades -->
+    <div class="grid grid-3" style="margin-bottom:20px;">
+      ${ACTIVIDADES_MAIN.map(a => {
+        const ing = totales[a].ingresos;
+        const gas = totales[a].gastos;
+        const res = ing - gas;
+        const pct = totalIng > 0 ? (ing/totalIng*100).toFixed(1) : 0;
+        const esMejor = a === mejorAct;
+        const esPeor = a === peorAct;
+        return `
+          <div class="card card-sm" style="border-left:3px solid ${ACT_COLORS[a]};">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:13px;font-weight:600;">${ACT_ICONS[a]} ${a}</span>
+              ${esMejor?'<span class="badge badge-green">🏆 Top</span>':''}
+              ${esPeor?'<span class="badge badge-red">⚠️ Menor</span>':''}
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+              <div><div style="font-size:10px;color:var(--txt3);">Ingresos</div><div class="amount-green" style="font-size:13px;font-weight:600;">${eur(ing)}</div></div>
+              <div><div style="font-size:10px;color:var(--txt3);">Gastos</div><div class="amount-red" style="font-size:13px;font-weight:600;">${eur(gas)}</div></div>
+            </div>
+            <div style="font-size:12px;font-weight:700;color:${res>=0?'var(--green)':'var(--red)'};">${eur(res)}</div>
+            <div class="progress" style="margin-top:8px;">
+              <div class="progress-bar" style="width:${pct}%;background:${ACT_COLORS[a]};"></div>
+            </div>
+            <div style="font-size:11px;color:var(--txt3);margin-top:4px;">${pct}% del total de ingresos</div>
+          </div>`;
+      }).join('')}
+    </div>
+
+    <!-- Últimos movimientos -->
+    <div class="card">
+      <div class="section-header">
+        <div><div class="section-title">Últimos movimientos</div></div>
+        <button class="btn btn-secondary btn-sm" onclick="navigate('movimientos')">Ver todos →</button>
+      </div>
+      ${renderTablaMovimientos(movs.slice(-8).reverse(), true)}
+    </div>
+  `;
+
+  renderChartActividades(totales);
+  renderCanvasMensual(movs);
+}
+
+function changeYear(delta) {
+  state.currentYear += delta;
+  render();
+}
+
+function renderChartActividades(totales) {
+  const el = document.getElementById('chart-actividades');
+  if (!el) return;
+  const maxVal = Math.max(...ACTIVIDADES_MAIN.map(a => Math.max(totales[a].ingresos, totales[a].gastos)), 1);
+  el.innerHTML = ACTIVIDADES_MAIN.map(a => {
+    const res = totales[a].ingresos - totales[a].gastos;
+    const pct = Math.min(100, Math.abs(res) / maxVal * 100);
+    return `<div class="bar-row">
+      <div class="bar-label">${ACT_ICONS[a]} ${a}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${res>=0?'var(--green)':'var(--red)'}"></div></div>
+      <div class="bar-value ${res>=0?'amount-green':'amount-red'}">${eur(res)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderCanvasMensual(movs) {
+  const canvas = document.getElementById('canvas-mensual');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.parentElement.offsetWidth - 40;
+  canvas.width = w;
+  canvas.height = 180;
+  const año = state.currentYear;
+
+  const ings = [], gas = [];
+  for (let m = 0; m < 12; m++) {
+    const mm = movs.filter(mv => {
+      const d = new Date(mv.fecha+'T00:00:00');
+      return d.getMonth()===m && d.getFullYear()===año;
+    });
+    ings.push(totalIngresos(mm));
+    gas.push(totalGastos(mm));
+  }
+
+  const maxV = Math.max(...ings, ...gas, 1);
+  const pad = {top:20,right:10,bottom:30,left:10};
+  const chartW = w - pad.left - pad.right;
+  const chartH = canvas.height - pad.top - pad.bottom;
+  const barW = chartW / 12;
+
+  ctx.clearRect(0,0,w,canvas.height);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i=0;i<=4;i++) {
+    const y = pad.top + chartH - (i/4)*chartH;
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(w-pad.right,y); ctx.stroke();
+  }
+
+  // Bars
+  MESES.forEach((mes,i) => {
+    const x = pad.left + i * barW;
+    const bw = barW * 0.35;
+    const h1 = (ings[i]/maxV)*chartH;
+    const h2 = (gas[i]/maxV)*chartH;
+
+    // Ingreso
+    ctx.fillStyle = '#10b98188';
+    ctx.fillRect(x+2, pad.top+chartH-h1, bw, h1);
+    // Gasto
+    ctx.fillStyle = '#ef444488';
+    ctx.fillRect(x+bw+3, pad.top+chartH-h2, bw, h2);
+
+    // Label mes
+    ctx.fillStyle = '#64748b';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(mes.slice(0,3), x+barW/2, canvas.height-6);
+  });
+
+  // Leyenda
+  ctx.fillStyle = '#10b981'; ctx.fillRect(pad.left,6,10,8);
+  ctx.fillStyle = '#94a3b8'; ctx.font='10px sans-serif'; ctx.textAlign='left';
+  ctx.fillText('Ingresos', pad.left+14, 14);
+  ctx.fillStyle = '#ef4444'; ctx.fillRect(pad.left+75,6,10,8);
+  ctx.fillText('Gastos', pad.left+89, 14);
+}
+
+/* ════════════════════════════════════════════
+   SECCIÓN: REGISTRO
+════════════════════════════════════════════ */
+function renderRegistro(el, actions) {
+  el.innerHTML = `
+    <div class="card" style="max-width:680px;margin:0 auto;">
+      <p style="color:var(--txt3);font-size:13px;margin-bottom:4px;">
+        Usa el formulario de la ventana emergente. Si no se abre, pulsa el botón.
+      </p>
+      <button class="btn btn-primary" onclick="abrirModalRegistro()">➕ Abrir formulario</button>
+    </div>
+  `;
+  abrirModalRegistro();
+}
+
+function abrirModalRegistro(id) {
+  state.editingId = id || null;
+  const form = document.getElementById('form-movimiento');
+  clearErrors();
+
+  if (id) {
+    const m = state.movimientos.find(x=>x.id===id);
+    if (!m) return;
+    document.getElementById('modal-titulo').textContent = 'Editar movimiento';
+    document.getElementById('mov-id').value = m.id;
+    document.getElementById('mov-fecha').value = m.fecha;
+    document.getElementById('mov-tipo').value = m.tipo;
+    document.getElementById('mov-actividad').value = m.actividad;
+    document.getElementById('mov-categoria').value = m.categoria||'';
+    document.getElementById('mov-concepto').value = m.concepto;
+    document.getElementById('mov-importe').value = m.importe;
+    document.getElementById('mov-metodo').value = m.metodo||'';
+    document.getElementById('mov-observaciones').value = m.observaciones||'';
+    document.getElementById('mov-reparto').checked = m.reparto||false;
+    document.getElementById('mov-reparto-modo').value = m.repartoModo||'proporcional';
+    onActividadChange();
+    if (m.reparto) {
+      document.getElementById('reparto-opciones').style.display='block';
+      renderRepartoPersonalizado(m.repartoDetalle);
+    }
+  } else {
+    document.getElementById('modal-titulo').textContent = 'Nuevo movimiento';
+    document.getElementById('mov-id').value = '';
+    document.getElementById('mov-fecha').value = today();
+    document.getElementById('mov-tipo').value = '';
+    document.getElementById('mov-actividad').value = '';
+    document.getElementById('mov-categoria').value = '';
+    document.getElementById('mov-concepto').value = '';
+    document.getElementById('mov-importe').value = '';
+    document.getElementById('mov-metodo').value = '';
+    document.getElementById('mov-observaciones').value = '';
+    document.getElementById('mov-reparto').checked = false;
+    document.getElementById('reparto-opciones').style.display='none';
+    document.getElementById('panel-reparto').style.display='none';
+  }
+  openModal('modal-registro');
+}
+
+function onTipoChange() {}
+function onActividadChange() {
+  const act = document.getElementById('mov-actividad').value;
+  const panel = document.getElementById('panel-reparto');
+  panel.style.display = act === 'Varios' ? 'block' : 'none';
+  if (act !== 'Varios') {
+    document.getElementById('mov-reparto').checked = false;
+    document.getElementById('reparto-opciones').style.display = 'none';
+  }
+}
+function onRepartoChange() {
+  const checked = document.getElementById('mov-reparto').checked;
+  document.getElementById('reparto-opciones').style.display = checked ? 'block' : 'none';
+  if (checked) renderRepartoPersonalizado();
+}
+
+function renderRepartoPersonalizado(prevDetalle) {
+  const modo = document.getElementById('mov-reparto-modo').value;
+  const box = document.getElementById('reparto-personalizado');
+  if (modo !== 'personalizado') { box.style.display='none'; return; }
+  box.style.display='block';
+  const items = document.getElementById('reparto-items');
+  const pct = 100 / ACTIVIDADES_MAIN.length;
+  items.innerHTML = ACTIVIDADES_MAIN.map(a => {
+    const val = prevDetalle ? (prevDetalle[a]||0) : pct.toFixed(1);
+    return `<div class="reparto-item">
+      <span class="dot dot-${slugAct(a)}"></span>
+      <label>${ACT_ICONS[a]} ${a}</label>
+      <input type="number" class="form-control" id="rep-${a}" value="${val}" min="0" max="100" step="0.1" onchange="updateRepartoHint()">
+      <span style="font-size:12px;color:var(--txt3);">%</span>
+    </div>`;
+  }).join('');
+  updateRepartoHint();
+}
+
+function updateRepartoHint() {
+  const total = ACTIVIDADES_MAIN.reduce((s,a)=>{
+    const el=document.getElementById('rep-'+a); return s+(el?parseFloat(el.value)||0:0);
+  },0);
+  const hint = document.getElementById('reparto-total-hint');
+  const ok = Math.abs(total-100)<0.1;
+  hint.textContent = `Total asignado: ${total.toFixed(1)}% ${ok?'✅':'⚠️ Debe sumar 100%'}`;
+  hint.style.color = ok ? 'var(--green)' : 'var(--yellow)';
+}
+
+function getRepartoDetalle() {
+  const modo = document.getElementById('mov-reparto-modo').value;
+  const detalle = {};
+  if (modo === 'personalizado') {
+    ACTIVIDADES_MAIN.forEach(a => {
+      const el = document.getElementById('rep-'+a);
+      detalle[a] = el ? parseFloat(el.value)||0 : 0;
+    });
+  } else if (modo === 'igual') {
+    const pct = 100 / ACTIVIDADES_MAIN.length;
+    ACTIVIDADES_MAIN.forEach(a => detalle[a] = pct);
+  } else {
+    // proporcional: se calcula al vuelo en calcTotales según ingresos actuales
+    // guardamos 'proporcional' y calculamos en tiempo real
+    ACTIVIDADES_MAIN.forEach(a => detalle[a] = 100/ACTIVIDADES_MAIN.length);
+  }
+  return detalle;
+}
+
+function clearErrors() {
+  ['fecha','tipo','actividad','concepto','importe'].forEach(f => {
+    const el = document.getElementById('err-'+f);
+    if (el) el.textContent = '';
+    const inp = document.getElementById('mov-'+f);
+    if (inp) inp.classList.remove('error');
+  });
+}
+
+function guardarMovimiento() {
+  clearErrors();
+  let valid = true;
+  const fecha = document.getElementById('mov-fecha').value;
+  const tipo = document.getElementById('mov-tipo').value;
+  const actividad = document.getElementById('mov-actividad').value;
+  const concepto = document.getElementById('mov-concepto').value.trim();
+  const importeRaw = document.getElementById('mov-importe').value;
+  const importe = parseFloat(importeRaw);
+
+  if (!fecha) { showErr('fecha','Fecha obligatoria'); valid=false; }
+  if (!tipo) { showErr('tipo','Selecciona tipo'); valid=false; }
+  if (!actividad) { showErr('actividad','Selecciona actividad'); valid=false; }
+  if (!concepto) { showErr('concepto','Concepto obligatorio'); valid=false; }
+  if (!importeRaw || isNaN(importe) || importe<=0) { showErr('importe','Importe inválido'); valid=false; }
+
+  const reparto = document.getElementById('mov-reparto').checked;
+  if (reparto && document.getElementById('mov-reparto-modo').value==='personalizado') {
+    const total = ACTIVIDADES_MAIN.reduce((s,a)=>{
+      const el=document.getElementById('rep-'+a); return s+(el?parseFloat(el.value)||0:0);
+    },0);
+    if (Math.abs(total-100)>0.5) { toast('El reparto personalizado debe sumar 100%','warning'); valid=false; }
+  }
+
+  if (!valid) return;
+
+  const mov = {
+    id: state.editingId || genId(),
+    fecha, tipo, actividad,
+    categoria: document.getElementById('mov-categoria').value.trim(),
+    concepto,
+    importe,
+    metodo: document.getElementById('mov-metodo').value,
+    observaciones: document.getElementById('mov-observaciones').value.trim(),
+    reparto: actividad==='Varios' && tipo==='gasto' && reparto,
+    repartoModo: document.getElementById('mov-reparto-modo').value,
+    repartoDetalle: (actividad==='Varios' && tipo==='gasto' && reparto) ? getRepartoDetalle() : null,
+    creadoEn: new Date().toISOString(),
+  };
+
+  if (state.editingId) {
+    const idx = state.movimientos.findIndex(m=>m.id===state.editingId);
+    if (idx>=0) state.movimientos[idx] = mov;
+    toast('Movimiento actualizado');
+  } else {
+    state.movimientos.push(mov);
+    toast('Movimiento guardado');
+  }
+
+  saveData();
+  closeModal('modal-registro');
+  state.editingId = null;
+  render();
+}
+
+function showErr(field, msg) {
+  document.getElementById('err-'+field).textContent = msg;
+  document.getElementById('mov-'+field).classList.add('error');
+}
+
+/* ════════════════════════════════════════════
+   SECCIÓN: MOVIMIENTOS
+════════════════════════════════════════════ */
+function renderMovimientos(el, actions) {
+  const f = state.filterMovimientos;
+  actions.innerHTML = `
+    <button class="btn btn-primary btn-sm" onclick="abrirModalRegistro()">➕ Nuevo</button>
+    <button class="btn btn-secondary btn-sm" onclick="exportarCSV()">⬇️ CSV</button>
+  `;
+
+  let movs = [...state.movimientos].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  if (f.desde) movs = movs.filter(m=>m.fecha>=f.desde);
+  if (f.hasta) movs = movs.filter(m=>m.fecha<=f.hasta);
+  if (f.actividad) movs = movs.filter(m=>m.actividad===f.actividad);
+  if (f.tipo) movs = movs.filter(m=>m.tipo===f.tipo);
+  if (f.texto) {
+    const t=f.texto.toLowerCase();
+    movs = movs.filter(m=>(m.concepto+m.categoria+m.observaciones).toLowerCase().includes(t));
+  }
+
+  const totalIng = totalIngresos(movs);
+  const totalGas = totalGastos(movs);
+
+  el.innerHTML = `
+    <div class="filters-bar no-print">
+      <div>
+        <div class="form-label">Desde</div>
+        <input type="date" class="form-control" value="${f.desde}" onchange="setFilter('desde',this.value)">
+      </div>
+      <div>
+        <div class="form-label">Hasta</div>
+        <input type="date" class="form-control" value="${f.hasta}" onchange="setFilter('hasta',this.value)">
+      </div>
+      <div>
+        <div class="form-label">Actividad</div>
+        <select class="form-control" onchange="setFilter('actividad',this.value)">
+          <option value="">Todas</option>
+          ${ACTIVIDADES.map(a=>`<option value="${a}" ${f.actividad===a?'selected':''}>${ACT_ICONS[a]} ${a}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <div class="form-label">Tipo</div>
+        <select class="form-control" onchange="setFilter('tipo',this.value)">
+          <option value="">Todos</option>
+          <option value="ingreso" ${f.tipo==='ingreso'?'selected':''}>💚 Ingresos</option>
+          <option value="gasto" ${f.tipo==='gasto'?'selected':''}>❤️ Gastos</option>
+        </select>
+      </div>
+      <div>
+        <div class="form-label">Buscar</div>
+        <input type="text" class="form-control" placeholder="Concepto, categoría..." value="${f.texto}" oninput="setFilter('texto',this.value)">
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="limpiarFiltros()">✕ Limpiar</button>
+    </div>
+
+    <div class="grid grid-3" style="margin-bottom:16px;">
+      <div class="card card-sm"><div class="card-title">Ingresos filtrados</div><div class="card-value amount-green">${eur(totalIng)}</div></div>
+      <div class="card card-sm"><div class="card-title">Gastos filtrados</div><div class="card-value amount-red">${eur(totalGas)}</div></div>
+      <div class="card card-sm"><div class="card-title">Resultado</div><div class="card-value ${totalIng-totalGas>=0?'amount-green':'amount-red'}">${eur(totalIng-totalGas)}</div></div>
+    </div>
+
+    <div class="card" style="padding:0;">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:13px;font-weight:600;">${movs.length} movimientos</span>
+      </div>
+      ${renderTablaMovimientos(movs, false)}
+    </div>
+  `;
+}
+
+function setFilter(key, val) {
+  state.filterMovimientos[key] = val;
+  renderMovimientos(document.getElementById('content'), document.getElementById('topbar-actions'));
+}
+function limpiarFiltros() {
+  state.filterMovimientos = { desde:'',hasta:'',actividad:'',tipo:'',texto:'' };
+  renderMovimientos(document.getElementById('content'), document.getElementById('topbar-actions'));
+}
+
+function renderTablaMovimientos(movs, mini) {
+  if (!movs.length) return `<div class="empty-state"><div class="icon">📭</div><h3>Sin movimientos</h3><p>No hay movimientos que mostrar.</p></div>`;
+  return `<div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Fecha</th>
+        <th>Actividad</th>
+        <th>Concepto</th>
+        ${mini?'':'<th>Categoría</th>'}
+        <th>Tipo</th>
+        <th>Importe</th>
+        ${mini?'':'<th>Método</th>'}
+        ${mini?'':'<th class="no-print">Acciones</th>'}
+      </tr></thead>
+      <tbody>
+        ${movs.map(m=>`<tr>
+          <td>${fmtDate(m.fecha)}</td>
+          <td><span class="dot dot-${slugAct(m.actividad)}"></span><span class="act-${slugAct(m.actividad)}">${m.actividad}</span></td>
+          <td class="highlight">${m.concepto}${m.reparto?` <span class="badge badge-blue" title="Repartido entre actividades">↔</span>`:''}${m.observaciones?`<div style="font-size:11px;color:var(--txt3)">${m.observaciones.slice(0,60)}</div>`:''}</td>
+          ${mini?'':'<td>'+(m.categoria||'—')+'</td>'}
+          <td><span class="badge ${m.tipo==='ingreso'?'badge-green':'badge-red'}">${m.tipo==='ingreso'?'▲ Ingreso':'▼ Gasto'}</span></td>
+          <td class="${m.tipo==='ingreso'?'amount-green':'amount-red'}">${eur(m.importe)}</td>
+          ${mini?'':'<td style="color:var(--txt3);font-size:12px;">'+(m.metodo||'—')+'</td>'}
+          ${mini?'':'<td class="no-print"><button class="btn btn-secondary btn-sm btn-icon" title="Editar" onclick="abrirModalRegistro(\''+m.id+'\')">✏️</button> <button class="btn btn-danger btn-sm btn-icon" title="Eliminar" onclick="confirmarEliminar(\''+m.id+'\')">🗑️</button></td>'}
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function confirmarEliminar(id) {
+  const m = state.movimientos.find(x=>x.id===id);
+  if (!m) return;
+  document.getElementById('confirm-title').textContent = 'Eliminar movimiento';
+  document.getElementById('confirm-msg').textContent = `¿Eliminar "${m.concepto}" (${eur(m.importe)})?`;
+  document.getElementById('confirm-ok').onclick = () => { eliminarMovimiento(id); closeModal('modal-confirm'); };
+  openModal('modal-confirm');
+}
+
+function eliminarMovimiento(id) {
+  state.movimientos = state.movimientos.filter(m=>m.id!==id);
+  saveData(); toast('Movimiento eliminado','warning');
+  render();
+}
+
+/* ════════════════════════════════════════════
+   SECCIÓN: POR ACTIVIDAD
+════════════════════════════════════════════ */
+function renderActividades(el, actions) {
+  const movs = getMovsAño(state.currentYear);
+  const totales = calcTotales(movs);
+  const totalIng = ACTIVIDADES.reduce((s,a)=>s+totales[a].ingresos,0);
+  const totalGas = ACTIVIDADES.reduce((s,a)=>s+totales[a].gastos,0);
+
+  actions.innerHTML = `
+    <div class="year-select-row" style="margin:0;">
+      <button class="year-btn" onclick="changeYear(-1)">◀</button>
+      <span class="year-display">${state.currentYear}</span>
+      <button class="year-btn" onclick="changeYear(1)">▶</button>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ Imprimir</button>
+  `;
+
+  el.innerHTML = `
+    <div class="grid grid-2" style="margin-bottom:20px;">
+      ${ACTIVIDADES.map(a => {
+        const ing = totales[a].ingresos;
+        const gas = totales[a].gastos;
+        const res = ing - gas;
+        const pctIng = totalIng>0?(ing/totalIng*100).toFixed(1):0;
+        const pctGas = totalGas>0?(gas/totalGas*100).toFixed(1):0;
+        const movAct = movs.filter(m=>m.actividad===a);
+        return `
+          <div class="card" style="border-left:3px solid ${ACT_COLORS[a]};">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <span style="font-size:15px;font-weight:700;">${ACT_ICONS[a]} ${a}</span>
+              <span class="badge ${res>=0?'badge-green':'badge-red'}">${res>=0?'Positivo':'Negativo'}</span>
+            </div>
+            <div class="grid grid-3" style="margin-bottom:12px;">
+              <div style="text-align:center;">
+                <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;">INGRESOS</div>
+                <div style="font-size:15px;font-weight:700;" class="amount-green">${eur(ing)}</div>
+                <div style="font-size:11px;color:var(--txt3);">${pctIng}% del total</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;">GASTOS</div>
+                <div style="font-size:15px;font-weight:700;" class="amount-red">${eur(gas)}</div>
+                <div style="font-size:11px;color:var(--txt3);">${pctGas}% del total</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;">RESULTADO</div>
+                <div style="font-size:15px;font-weight:700;" class="${res>=0?'amount-green':'amount-red'}">${eur(res)}</div>
+                <div style="font-size:11px;color:var(--txt3);">${movAct.length} movs.</div>
+              </div>
+            </div>
+            <div class="progress">
+              <div class="progress-bar" style="width:${pctIng}%;background:${ACT_COLORS[a]};"></div>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>
+
+    <!-- Tabla comparativa -->
+    <div class="card" style="padding:0;">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);">
+        <div class="section-title">Comparativa entre actividades</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Actividad</th>
+            <th>Ingresos</th>
+            <th>% ing.</th>
+            <th>Gastos</th>
+            <th>% gas.</th>
+            <th>Resultado</th>
+            <th>Margen</th>
+          </tr></thead>
+          <tbody>
+            ${ACTIVIDADES.map(a=>{
+              const ing=totales[a].ingresos, gas=totales[a].gastos, res=ing-gas;
+              const pI=totalIng>0?(ing/totalIng*100).toFixed(1):0;
+              const pG=totalGas>0?(gas/totalGas*100).toFixed(1):0;
+              const margen=ing>0?(res/ing*100).toFixed(1):'—';
+              return `<tr>
+                <td><span class="dot dot-${slugAct(a)}"></span><span class="act-${slugAct(a)}" style="font-weight:600;">${ACT_ICONS[a]} ${a}</span></td>
+                <td class="amount-green">${eur(ing)}</td>
+                <td style="color:var(--txt3);">${pI}%</td>
+                <td class="amount-red">${eur(gas)}</td>
+                <td style="color:var(--txt3);">${pG}%</td>
+                <td class="${res>=0?'amount-green':'amount-red'}">${eur(res)}</td>
+                <td><span class="badge ${parseFloat(margen)>=0?'badge-green':'badge-red'}">${margen}${margen!=='—'?'%':''}</span></td>
+              </tr>`;
+            }).join('')}
+            <tr style="background:var(--surface);">
+              <td style="font-weight:700;">TOTAL</td>
+              <td class="amount-green" style="font-weight:700;">${eur(totalIng)}</td>
+              <td>100%</td>
+              <td class="amount-red" style="font-weight:700;">${eur(totalGas)}</td>
+              <td>100%</td>
+              <td class="${totalIng-totalGas>=0?'amount-green':'amount-red'}" style="font-weight:700;">${eur(totalIng-totalGas)}</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+/* ════════════════════════════════════════════
+   SECCIÓN: RESUMEN MENSUAL
+════════════════════════════════════════════ */
+function renderMensual(el, actions) {
+  const año = state.currentYear;
+  actions.innerHTML = `
+    <div class="year-select-row" style="margin:0;">
+      <button class="year-btn" onclick="changeYear(-1)">◀</button>
+      <span class="year-display">${año}</span>
+      <button class="year-btn" onclick="changeYear(1)">▶</button>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ Imprimir</button>
+  `;
+
+  const filas = MESES.map((mes, mi) => {
+    const movs = state.movimientos.filter(m => {
+      const d = new Date(m.fecha + 'T00:00:00');
+      return d.getFullYear() === año && d.getMonth() === mi;
+    });
+    const ing = totalIngresos(movs);
+    const gas = totalGastos(movs);
+    const res = ing - gas;
+    return { mes, ing, gas, res, n: movs.length };
+  });
+
+  const totIng = filas.reduce((s,r)=>s+r.ing,0);
+  const totGas = filas.reduce((s,r)=>s+r.gas,0);
+  const maxVal = Math.max(...filas.map(r=>Math.max(r.ing,r.gas)),1);
+
+  el.innerHTML = `
+    <!-- Gráfico visual mensual -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="section-title" style="margin-bottom:16px;">Evolución mensual ${año}</div>
+      <div id="chart-mensual-bars"></div>
+    </div>
+
+    <!-- Tabla mensual -->
+    <div class="card" style="padding:0;">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);">
+        <div class="section-title">Detalle por mes</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Mes</th>
+            <th>Ingresos</th>
+            <th>Gastos</th>
+            <th>Resultado</th>
+            <th>Nº movs.</th>
+            <th>Visual</th>
+          </tr></thead>
+          <tbody>
+            ${filas.map(r=>`<tr>
+              <td class="highlight">${r.mes}</td>
+              <td class="amount-green">${eur(r.ing)}</td>
+              <td class="amount-red">${eur(r.gas)}</td>
+              <td class="${r.res>=0?'amount-green':'amount-red'}">${eur(r.res)}</td>
+              <td style="color:var(--txt3);">${r.n}</td>
+              <td style="min-width:120px;">
+                <div style="display:flex;flex-direction:column;gap:3px;">
+                  <div class="progress"><div class="progress-bar" style="width:${(r.ing/maxVal*100).toFixed(1)}%;background:var(--green);"></div></div>
+                  <div class="progress"><div class="progress-bar" style="width:${(r.gas/maxVal*100).toFixed(1)}%;background:var(--red);"></div></div>
+                </div>
+              </td>
+            </tr>`).join('')}
+            <tr style="background:var(--surface);">
+              <td style="font-weight:700;">TOTAL AÑO</td>
+              <td class="amount-green" style="font-weight:700;">${eur(totIng)}</td>
+              <td class="amount-red" style="font-weight:700;">${eur(totGas)}</td>
+              <td class="${totIng-totGas>=0?'amount-green':'amount-red'}" style="font-weight:700;">${eur(totIng-totGas)}</td>
+              <td style="color:var(--txt3);">${filas.reduce((s,r)=>s+r.n,0)}</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  // Bar chart mensual
+  const chartEl = document.getElementById('chart-mensual-bars');
+  chartEl.innerHTML = filas.map(r=>`
+    <div class="bar-row">
+      <div class="bar-label">${r.mes.slice(0,3)}</div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:3px;">
+        <div class="bar-track"><div class="bar-fill" style="width:${(r.ing/maxVal*100).toFixed(1)}%;background:var(--green);"></div></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(r.gas/maxVal*100).toFixed(1)}%;background:var(--red);"></div></div>
+      </div>
+      <div style="width:130px;text-align:right;font-size:11px;">
+        <span class="amount-green">${eur(r.ing)}</span> / <span class="amount-red">${eur(r.gas)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ════════════════════════════════════════════
+   SECCIÓN: RESUMEN GLOBAL
+════════════════════════════════════════════ */
+function renderResumen(el, actions) {
+  const año = state.currentYear;
+  const movs = getMovsAño(año);
+  const totales = calcTotales(movs);
+  const totalIng = ACTIVIDADES.reduce((s,a)=>s+totales[a].ingresos,0);
+  const totalGas = ACTIVIDADES.reduce((s,a)=>s+totales[a].gastos,0);
+  const gasVar = totales['Varios'].gastos;
+
+  // Calcular reparto de varios proporcional
+  const ingMainTotal = ACTIVIDADES_MAIN.reduce((s,a)=>s+totales[a].ingresos,0);
+
+  actions.innerHTML = `
+    <div class="year-select-row" style="margin:0;">
+      <button class="year-btn" onclick="changeYear(-1)">◀</button>
+      <span class="year-display">${año}</span>
+      <button class="year-btn" onclick="changeYear(1)">▶</button>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ Imprimir</button>
+    <button class="btn btn-secondary btn-sm" onclick="exportarCSV()">⬇️ CSV</button>
+  `;
+
+  el.innerHTML = `
+    <!-- Resumen global tipo "última página Excel" -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="section-header">
+        <div>
+          <div class="section-title">📊 Resumen Global ${año}</div>
+          <div class="section-sub">Vista consolidada de todas las actividades</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="badge badge-green">Ingresos: ${eur(totalIng)}</span>
+          <span class="badge badge-red">Gastos: ${eur(totalGas)}</span>
+          <span class="badge ${totalIng-totalGas>=0?'badge-green':'badge-red'}">Resultado: ${eur(totalIng-totalGas)}</span>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="margin-top:16px;">
+        <table class="resumen-table">
+          <thead>
+            <tr>
+              <th>Actividad</th>
+              <th>Concepto</th>
+              <th>Enero</th><th>Febrero</th><th>Marzo</th><th>Abril</th>
+              <th>Mayo</th><th>Junio</th><th>Julio</th><th>Agosto</th>
+              <th>Septiembre</th><th>Octubre</th><th>Noviembre</th><th>Diciembre</th>
+              <th>TOTAL AÑO</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ACTIVIDADES.map(a => {
+              const ing_meses = MESES.map((_,mi)=>{
+                const mm=movs.filter(m=>{const d=new Date(m.fecha+'T00:00:00');return d.getMonth()===mi&&m.actividad===a&&m.tipo==='ingreso';});
+                return totalIngresos(mm);
+              });
+              const gas_meses = MESES.map((_,mi)=>{
+                const mm=movs.filter(m=>{const d=new Date(m.fecha+'T00:00:00');return d.getMonth()===mi&&m.actividad===a&&m.tipo==='gasto';});
+                return totalGastos(mm);
+              });
+              const totIng = ing_meses.reduce((s,v)=>s+v,0);
+              const totGas = gas_meses.reduce((s,v)=>s+v,0);
+              const res = totIng - totGas;
+              return `
+                <tr>
+                  <td rowspan="3" style="vertical-align:middle;font-weight:700;border-right:2px solid ${ACT_COLORS[a]};padding-left:14px;">
+                    <span class="dot" style="background:${ACT_COLORS[a]};"></span>${ACT_ICONS[a]} ${a}
+                  </td>
+                  <td style="color:var(--green);font-weight:600;font-size:12px;">INGRESOS</td>
+                  ${ing_meses.map(v=>`<td class="${v>0?'amount-green':''}">${v>0?eur(v):'—'}</td>`).join('')}
+                  <td class="amount-green" style="font-weight:700;">${eur(totIng)}</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--red);font-weight:600;font-size:12px;">GASTOS</td>
+                  ${gas_meses.map(v=>`<td class="${v>0?'amount-red':''}">${v>0?eur(v):'—'}</td>`).join('')}
+                  <td class="amount-red" style="font-weight:700;">${eur(totGas)}</td>
+                </tr>
+                <tr class="subtotal">
+                  <td style="font-weight:700;font-size:12px;">RESULTADO</td>
+                  ${MESES.map((_,mi)=>{
+                    const r=ing_meses[mi]-gas_meses[mi];
+                    return `<td class="${r>0?'amount-green':r<0?'amount-red':''}">${r!==0?eur(r):'—'}</td>`;
+                  }).join('')}
+                  <td class="${res>=0?'amount-green':'amount-red'}">${eur(res)}</td>
+                </tr>`;
+            }).join('')}
+
+            <!-- TOTAL GLOBAL -->
+            <tr class="total">
+              <td colspan="2" style="font-size:14px;font-weight:700;">📊 TOTAL GENERAL</td>
+              ${MESES.map((_,mi)=>{
+                const ingM=ACTIVIDADES.reduce((s,a)=>{
+                  const mm=movs.filter(m=>{const d=new Date(m.fecha+'T00:00:00');return d.getMonth()===mi&&m.actividad===a&&m.tipo==='ingreso';});
+                  return s+totalIngresos(mm);
+                },0);
+                const gasM=ACTIVIDADES.reduce((s,a)=>{
+                  const mm=movs.filter(m=>{const d=new Date(m.fecha+'T00:00:00');return d.getMonth()===mi&&m.actividad===a&&m.tipo==='gasto';});
+                  return s+totalGastos(mm);
+                },0);
+                const r=ingM-gasM;
+                return `<td class="${r>=0?'amount-green':'amount-red'}" style="font-weight:700;">${r!==0?eur(r):'—'}</td>`;
+              }).join('')}
+              <td class="${totalIng-totalGas>=0?'amount-green':'amount-red'}" style="font-size:14px;font-weight:700;">${eur(totalIng-totalGas)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Resumen compacto -->
+    <div class="grid grid-2" style="margin-bottom:20px;">
+      <div class="card">
+        <div class="section-title" style="margin-bottom:12px;">Ingresos por actividad</div>
+        <div class="bar-chart">
+          ${ACTIVIDADES.map(a=>{
+            const ing=totales[a].ingresos;
+            const pct=totalIng>0?(ing/totalIng*100):0;
+            return `<div class="bar-row">
+              <div class="bar-label">${ACT_ICONS[a]} ${a}</div>
+              <div class="bar-track"><div class="bar-fill" style="width:${pct.toFixed(1)}%;background:${ACT_COLORS[a]};"></div></div>
+              <div class="bar-value">${eur(ing)}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title" style="margin-bottom:12px;">Gastos por actividad</div>
+        <div class="bar-chart">
+          ${ACTIVIDADES.map(a=>{
+            const gas=totales[a].gastos;
+            const pct=totalGas>0?(gas/totalGas*100):0;
+            return `<div class="bar-row">
+              <div class="bar-label">${ACT_ICONS[a]} ${a}</div>
+              <div class="bar-track"><div class="bar-fill" style="width:${pct.toFixed(1)}%;background:${ACT_COLORS[a]};"></div></div>
+              <div class="bar-value amount-red">${eur(gas)}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI final -->
+    <div class="card" style="text-align:center;padding:32px;">
+      <div style="font-size:13px;color:var(--txt3);margin-bottom:8px;">BENEFICIO NETO ${año}</div>
+      <div style="font-size:48px;font-weight:800;letter-spacing:-2px;color:${totalIng-totalGas>=0?'var(--green)':'var(--red)'};">
+        ${eur(totalIng-totalGas)}
+      </div>
+      <div style="display:flex;justify-content:center;gap:24px;margin-top:16px;flex-wrap:wrap;">
+        <div><span style="color:var(--txt3);font-size:12px;">Ingresos</span><div class="amount-green" style="font-size:18px;font-weight:700;">${eur(totalIng)}</div></div>
+        <div style="color:var(--border);font-size:24px;">−</div>
+        <div><span style="color:var(--txt3);font-size:12px;">Gastos totales</span><div class="amount-red" style="font-size:18px;font-weight:700;">${eur(totalGas)}</div></div>
+        <div style="color:var(--border);font-size:24px;">=</div>
+        <div><span style="color:var(--txt3);font-size:12px;">Resultado</span><div class="${totalIng-totalGas>=0?'amount-green':'amount-red'}" style="font-size:18px;font-weight:700;">${eur(totalIng-totalGas)}</div></div>
+      </div>
+    </div>
+  `;
+}
+
+/* ════════════════════════════════════════════
+   IMPORTAR / EXPORTAR / BACKUP
+════════════════════════════════════════════ */
+function exportarCSV() {
+  const cols = ['ID','Fecha','Tipo','Actividad','Categoría','Concepto','Importe','Método','Observaciones','Reparto','ModoReparto'];
+  const rows = state.movimientos.map(m => [
+    m.id, m.fecha, m.tipo, m.actividad,
+    m.categoria||'', m.concepto, m.importe.toFixed(2),
+    m.metodo||'', m.observaciones||'',
+    m.reparto?'Sí':'No', m.repartoModo||''
+  ].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';'));
+
+  const csv = '\ufeff' + [cols.join(';'), ...rows].join('\n');
+  descargar(`contabilidad_${state.currentYear}.csv`, csv, 'text/csv');
+  toast('CSV exportado correctamente');
+}
+
+function backupJSON() {
+  const data = { version:1, fecha: new Date().toISOString(), movimientos: state.movimientos };
+  descargar(`backup_contabilidad_${Date.now()}.json`, JSON.stringify(data,null,2), 'application/json');
+  toast('Copia de seguridad creada');
+}
+
+function importarJSON(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const movs = data.movimientos || data;
+      if (!Array.isArray(movs)) throw new Error('Formato inválido');
+      state.movimientos = movs;
+      saveData(); toast(`Importados ${movs.length} movimientos`); render();
+    } catch(err) { toast('Error al importar: ' + err.message, 'error'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function restaurarCopia(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const movs = data.movimientos || data;
+      if (!Array.isArray(movs)) throw new Error('Formato inválido');
+      document.getElementById('confirm-title').textContent = 'Restaurar copia';
+      document.getElementById('confirm-msg').textContent = `¿Restaurar ${movs.length} movimientos? Se reemplazarán los datos actuales.`;
+      document.getElementById('confirm-ok').onclick = () => {
+        state.movimientos = movs; saveData(); closeModal('modal-confirm');
+        toast(`Restaurados ${movs.length} movimientos`); render();
+      };
+      openModal('modal-confirm');
+    } catch(err) { toast('Error al restaurar: ' + err.message, 'error'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function resetDatos() {
+  document.getElementById('confirm-title').textContent = '⚠️ Reiniciar todos los datos';
+  document.getElementById('confirm-msg').textContent = 'Se eliminarán TODOS los movimientos. Esta acción no se puede deshacer. ¿Continuar?';
+  document.getElementById('confirm-ok').textContent = 'Sí, borrar todo';
+  document.getElementById('confirm-ok').onclick = () => {
+    state.movimientos = []; saveData(); closeModal('modal-confirm');
+    toast('Datos reiniciados', 'warning'); render();
+  };
+  openModal('modal-confirm');
+}
+
+function descargar(nombre, contenido, tipo) {
+  const blob = new Blob([contenido], {type: tipo+';charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = nombre; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ════════════════════════════════════════════
+   EVENTOS BOTONES SIDEBAR
+════════════════════════════════════════════ */
+document.getElementById('btn-backup').addEventListener('click', backupJSON);
+document.getElementById('btn-restore').addEventListener('click', () => document.getElementById('input-restore').click());
+document.getElementById('btn-export-csv').addEventListener('click', exportarCSV);
+document.getElementById('btn-reset').addEventListener('click', resetDatos);
+
+// Cerrar sidebar al hacer click fuera en móvil
+document.getElementById('main').addEventListener('click', () => {
+  if (window.innerWidth < 900) document.getElementById('sidebar').classList.remove('open');
+});
+
+// Cerrar modales con Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeModal('modal-registro');
+    closeModal('modal-confirm');
+  }
+});
+
+/* ════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════ */
+loadData();
+render();
+</script>
+</body>
+</html>
