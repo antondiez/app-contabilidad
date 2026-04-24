@@ -507,6 +507,7 @@ input:checked + .slider:before { transform: translateX(18px); background: #fff; 
       <button class="btn-sidebar" id="btn-backup">💾 Copia de seguridad</button>
       <button class="btn-sidebar" id="btn-restore">📂 Restaurar copia</button>
       <button class="btn-sidebar" id="btn-export-csv">⬇️ Exportar CSV</button>
+      <button class="btn-sidebar" id="btn-link-file">🔗 Vincular archivo local</button>
       <button class="btn-sidebar danger" id="btn-reset">🗑️ Reiniciar datos</button>
     </div>
   </nav>
@@ -678,17 +679,135 @@ let state = {
   currentYear: new Date().getFullYear(),
   filterMovimientos: { desde:'', hasta:'', actividad:'', tipo:'', texto:'' },
 };
+let localFileHandle = null;
 
-/* ─── LocalStorage ─── */
+
+/* ─── Persistencia local (navegador + archivo) ─── */
 function saveData() {
   try { localStorage.setItem('fdc_contabilidad', JSON.stringify(state.movimientos)); }
   catch(e) { toast('Error al guardar datos: ' + e.message, 'error'); }
+  syncArchivoLocal();
 }
 function loadData() {
   try {
     const d = localStorage.getItem('fdc_contabilidad');
     if (d) state.movimientos = JSON.parse(d);
   } catch(e) { state.movimientos = []; }
+}
+
+function soportaArchivoLocal() {
+  return 'showSaveFilePicker' in window && 'indexedDB' in window;
+}
+function getDataForBackup() {
+  return { version:1, fecha: new Date().toISOString(), movimientos: state.movimientos };
+}
+
+function openHandleDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('fdc_contabilidad_db', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('kv');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function guardarHandleArchivo(handle) {
+  const db = await openHandleDB();
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction('kv', 'readwrite');
+    tx.objectStore('kv').put(handle, 'localFileHandle');
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  db.close();
+}
+async function cargarHandleArchivo() {
+  const db = await openHandleDB();
+  const handle = await new Promise((resolve, reject) => {
+    const tx = db.transaction('kv', 'readonly');
+    const req = tx.objectStore('kv').get('localFileHandle');
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+  db.close();
+  return handle;
+}
+async function borrarHandleArchivo() {
+  const db = await openHandleDB();
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction('kv', 'readwrite');
+    tx.objectStore('kv').delete('localFileHandle');
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  db.close();
+}
+
+function updateFileLinkButton() {
+  const btn = document.getElementById('btn-link-file');
+  if (!btn) return;
+  if (!soportaArchivoLocal()) {
+    btn.disabled = true;
+    btn.textContent = '🔒 Archivo local no compatible';
+    return;
+  }
+  btn.disabled = false;
+  btn.textContent = localFileHandle ? '✅ Archivo local vinculado' : '🔗 Vincular archivo local';
+}
+
+async function writeDataToArchivoLocal() {
+  if (!localFileHandle) return;
+  const writable = await localFileHandle.createWritable();
+  await writable.write(JSON.stringify(getDataForBackup(), null, 2));
+  await writable.close();
+}
+async function syncArchivoLocal() {
+  if (!localFileHandle) return;
+  try { await writeDataToArchivoLocal(); }
+  catch(e) { console.warn('No se pudo sincronizar archivo local:', e); }
+}
+
+async function vincularArchivoLocal() {
+  if (!soportaArchivoLocal()) {
+    toast('Tu navegador no permite guardar automáticamente en archivo local.', 'warning');
+    return;
+  }
+  try {
+    localFileHandle = await window.showSaveFilePicker({
+      suggestedName: 'contabilidad_datos.json',
+      types: [{ description: 'Archivo JSON', accept: { 'application/json': ['.json'] } }]
+    });
+    await guardarHandleArchivo(localFileHandle);
+    await writeDataToArchivoLocal();
+    updateFileLinkButton();
+    toast('Archivo local vinculado. Los cambios se guardarán ahí automáticamente.');
+  } catch(e) {
+    if (e.name !== 'AbortError') toast('No se pudo vincular el archivo: ' + e.message, 'error');
+  }
+}
+
+async function cargarArchivoVinculado() {
+  if (!soportaArchivoLocal()) return;
+  try {
+    localFileHandle = await cargarHandleArchivo();
+    if (!localFileHandle) return;
+
+    const file = await localFileHandle.getFile();
+    const txt = await file.text();
+    if (txt.trim()) {
+      const data = JSON.parse(txt);
+      const movs = data.movimientos || data;
+      if (Array.isArray(movs)) {
+        state.movimientos = movs;
+        localStorage.setItem('fdc_contabilidad', JSON.stringify(state.movimientos));
+      }
+    }
+  } catch(e) {
+    localFileHandle = null;
+    await borrarHandleArchivo();
+    toast('No se pudo recuperar el archivo local vinculado. Puedes vincularlo de nuevo.', 'warning');
+  } finally {
+    updateFileLinkButton();
+  }
 }
 
 /* ─── Utilidades ─── */
@@ -1680,7 +1799,7 @@ function exportarCSV() {
 }
 
 function backupJSON() {
-  const data = { version:1, fecha: new Date().toISOString(), movimientos: state.movimientos };
+  const data = getDataForBackup();
   descargar(`backup_contabilidad_${Date.now()}.json`, JSON.stringify(data,null,2), 'application/json');
   toast('Copia de seguridad creada');
 }
@@ -1747,6 +1866,7 @@ function descargar(nombre, contenido, tipo) {
 document.getElementById('btn-backup').addEventListener('click', backupJSON);
 document.getElementById('btn-restore').addEventListener('click', () => document.getElementById('input-restore').click());
 document.getElementById('btn-export-csv').addEventListener('click', exportarCSV);
+document.getElementById('btn-link-file').addEventListener('click', vincularArchivoLocal);
 document.getElementById('btn-reset').addEventListener('click', resetDatos);
 
 // Cerrar sidebar al hacer click fuera en móvil
@@ -1765,8 +1885,14 @@ document.addEventListener('keydown', e => {
 /* ════════════════════════════════════════════
    INIT
 ════════════════════════════════════════════ */
-loadData();
-render();
+async function initApp() {
+  loadData();
+  updateFileLinkButton();
+  await cargarArchivoVinculado();
+  render();
+}
+
+initApp();
 </script>
 </body>
 </html>
